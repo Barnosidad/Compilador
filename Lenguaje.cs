@@ -10,7 +10,7 @@ using Microsoft.VisualBasic;
 /*
     Requerimiento 1: Solo la primera produccion es publica, las demas son privadas
     Requerimiento 2: Implementar la cerradura epsilon
-    Requerimiento 3: Imprementar el operador OR
+    Requerimiento 3: Imprementar el operador OR 
     Requerimiento 4: Indentar el codigo (Aumentar de manera dinamica los tabuladores con los corchetes)
     Conjunto de tokens, listas de recursividad con el mismo objeto, lista de epsilon ?
     Si viene or, ni checo epsilon, si no viene or solo puede venir epsilon teniendo en cuenta
@@ -24,13 +24,16 @@ namespace Compilador
     {
         // Tal vez necesite una pila para almacenar las opcionales y el or
         private int IndentCont;
+        protected bool PrimerProduccion;
         public Lenguaje()
         {
             IndentCont = 0;
+            PrimerProduccion = true;
         }
         public Lenguaje(string nombre) : base(nombre)
         {
             IndentCont = 0;
+            PrimerProduccion = true;
         }
         private string IndentString()
         {
@@ -82,10 +85,17 @@ namespace Compilador
         }
         private void Producciones()
         {
-            if (Clasificacion == Tipos.SNT)
+            if (Clasificacion == Tipos.SNT && PrimerProduccion == true)
             {
                 lenguajecs.WriteLine(IndentString() + "public void " + Contenido + "()");
                 lenguajecs.WriteLine(IndentString() + "{");
+                IndentCont++;
+                PrimerProduccion = false;
+            }
+            if (Clasificacion == Tipos.SNT && PrimerProduccion == false)
+            {
+                lenguajecs.WriteLine(IndentString(IndentCont) + "private void " + Contenido + "()");
+                lenguajecs.WriteLine(IndentString(IndentCont) + "{");
                 IndentCont++;
             }
             match(Tipos.SNT);

@@ -117,8 +117,8 @@ namespace Compilador
         private bool EsTipo(string tipo)
         {
             String[] tipos = { "Identificador", "Numero", "FinSentencia", "OpTermino", "OpFactor", "OpLogico",
-                "OpRelacional", "OpTernario", "Asignacion", "IncTermino", "IncFactor", "Cadena",
-                "Inicio", "Fin", "Caracter", "Moneda", "TipoDato", "Ciclo", "Condicion" };
+                "OpRelacional", "OpTernario", "Asignacion", "IncTermino", "IncFactor", "Cadena", "Inicio", "Fin",
+                "Caracter", "Moneda", "TipoDato", "Ciclo", "Condicion" };
             return tipos.ToList().Exists(x => x == tipo); 
         }
         public bool finArchivo()
