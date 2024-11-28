@@ -8,10 +8,10 @@ using System.Text;
 using Microsoft.VisualBasic;
 
 /*
-    Requerimiento 1: Solo la primera produccion es publica, las demas son privadas
-    Requerimiento 2: Implementar la cerradura epsilon
-    Requerimiento 3: Imprementar el operador OR
-    Requerimiento 4: Indentar el codigo (Aumentar de manera dinamica los tabuladores con los corchetes)
+    TRABAJANDO: Requerimiento 1: Solo la primera produccion es publica, las demas son privadas
+    HECHO: Requerimiento 2: Implementar la cerradura epsilon
+    HECHO: Requerimiento 3: Imprementar el operador OR
+    HECHO: Requerimiento 4: Indentar el codigo (Aumentar de manera dinamica los tabuladores con los corchetes)
     Conjunto de tokens, listas de recursividad con el mismo objeto, lista de epsilon ?
     Si viene or, ni checo epsilon, si no viene or solo puede venir epsilon teniendo en cuenta
     los parentesis.
@@ -100,6 +100,23 @@ namespace Compilador
             ConjuntoTokens(ref listaTokens, ref globalOrderP);
             listaTokens.ForEach(x => Console.WriteLine(x.TClasificacion + ", " + x.TContenido + ", " + x.TGOrder + ", " + x.TControl + ", " + x.TSImpresion));
             match(Tipos.FinProduccion);
+            // Necesito verificar si hay un or dentro de otro or, digo, si hay algo en la lista
+            if(listaTokens.Count > 0)
+            {
+                for(int i = 1; i <= globalOrderP; i++)
+                {
+                    if(listaTokens.Exists(x => x.TGOrder == i))
+                    {
+                        if(listaTokens.Find(x => x.TGOrder == i)?.TControl == Control.Secuencial)
+                        {
+                            int firstOccurence, lastOccurence;
+                            firstOccurence = listaTokens.FindIndex(x => x.TGOrder == i);
+                            lastOccurence = listaTokens.FindLastIndex(x => x.TGOrder == i);
+                            for(int j = firstOccurence; j <= lastOccurence; j++) if(listaTokens[j].TGOrder != i) throw new Error("NO PUEDE HABER NADA DENTRO DE UN OR, NI OTRO OR", log, linea);
+                        }
+                    }
+                }
+            }
             // Ahora con todas estas listas, toca trabajar en la impresion y debe ser simplista
             servicioDeImpresion(listaTokens);
             IndentCont--;
@@ -191,12 +208,27 @@ namespace Compilador
             match(Tipos.PDerecho);
             Console.WriteLine("El orden de este parentesis es: " + localControl);
             // Post almacenaje se hacen las comprobaciones y generacion de codigo
+            // ! El problema del epsilon ahora es que depende de donde coloques sus partes no encapsula todo lo que
+            // ! quisieras que encapsule, una solucion que veo es ver cuantos aumentos ha habido en el orden global a partir de donde se quedo
+            // ! ademas de ver la distancia que tiene al token de control final de este EPSILON en este parentesis
+            // ! si el token de CONTROL FINAL no es el ultimo guardado en este PARENTEISIS EPSILON entonces
+            // ! Agrego un DUMMY extra para que sea el final, ahora la pregunta es cual sera el dummy?
+            // ! Tengo que ver cuales tipos tengo a la mano, solo aplicable al caso epsilon, y si agrego el epsilon como dummy?
+            // ! Me parece que esto lo hare con el orden global
             if(Clasificacion == Tipos.Epsilon)
             {
                 // Si en el mismo orden hay suficientes ORS salta error
                 if(listaTokens.FindAll(x => x.TGOrder == localControl).Any(x => x.TClasificacion == Tipos.Or)) throw new Error("No puede haber OR junto con EPSILON", log, linea);
+                // Comprobar que haya suficientes cosas adentro
+                if(listaTokens.FindAll(x => x.TGOrder == localControl).Count < 2) throw new Error ("No hay suficientes TIPOS para el EPSILON", log, linea);
                 // Es obligatorio especificar la condicion de recurisivdad
                 if(listaTokens.FindAll(x => x.TGOrder == localControl).First().TClasificacion == Tipos.SNT) throw new Error("ES NECESARIO ESPECIFICAR LA CONDICION DE RECURSIVIDAD ST O TIPOS", log, linea);
+                // Encapsulacion adicional
+                if(listaTokens.Last().TGOrder != localControl)
+                {
+                    listaTokens.Add(new TokensOpt(Tipos.Epsilon,"",localControl));
+                }
+                // Agrego el control
                 listaTokens.FindAll(x => x.TGOrder == localControl).ForEach(x => x.TControl = Control.Recursivo);
                 listaTokens.FindAll(x => x.TGOrder == localControl).First().TSImpresion = SecuenciaImpresion.Encabezado;
                 listaTokens.FindAll(x => x.TGOrder == localControl).Last().TSImpresion = SecuenciaImpresion.Final;
@@ -207,6 +239,7 @@ namespace Compilador
                 // Si en el mismo orden hay suficientes ORS
                 if(listaTokens.FindAll(x => x.TGOrder == localControl).Any(x => x.TClasificacion == Tipos.Or))
                 {
+                    // Como veo si hay un or adentro de un OR
                     // Veo si estan en orden los ORS
                     for(int i = 0; i < listaTokens.FindAll(x => x.TGOrder == localControl).Count; i++) if(i % 2 != 0) if(listaTokens.FindAll(x => x.TGOrder == localControl).ElementAt(i).TClasificacion != Tipos.Or) throw new Error("El OR no esta en orden",log,linea);
                     // Veo si son ST o TIPO
@@ -217,11 +250,10 @@ namespace Compilador
                     listaTokens.FindAll(x => x.TGOrder == localControl).ForEach(x => x.TControl = Control.Secuencial);
                     listaTokens.FindAll(x => x.TGOrder == localControl).First().TSImpresion = SecuenciaImpresion.Encabezado;
                     listaTokens.FindAll(x => x.TGOrder == localControl).Last().TSImpresion = SecuenciaImpresion.Final;
-                } 
+                }
                 else 
                 {
                     // Los hago a todos normales
-                    Console.WriteLine("AlGO NORMAL" + localControl);
                     listaTokens.FindAll(x => x.TGOrder == localControl).ForEach(x => x.TControl = Control.Normal);
                 }
             }
@@ -259,7 +291,7 @@ namespace Compilador
                             // lenguajecs.WriteLine(IndentString() + "match(Tipos." + Cola.First().TContenido + ");");
                         }
                     }
-                    else if(t.TSImpresion == SecuenciaImpresion.Final)
+                    else if(t.TSImpresion == SecuenciaImpresion.Final && t.TContenido != "")
                     {
                         if (t.TClasificacion == Tipos.SNT)
                         {
@@ -273,6 +305,11 @@ namespace Compilador
                         {
                             lenguajecs.WriteLine(IndentString() + "match(Tipos." + t.TContenido + ");");
                         }
+                        IndentCont--;
+                        lenguajecs.WriteLine(IndentString() + "}");
+                    }
+                    else if(t.TSImpresion == SecuenciaImpresion.Final && t.TContenido == "")
+                    {
                         IndentCont--;
                         lenguajecs.WriteLine(IndentString() + "}");
                     }

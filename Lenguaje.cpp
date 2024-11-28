@@ -28,28 +28,9 @@ namespace Cplusplus
 			match("<");
 			match(Tipos.Identificador);
 			match(">");
-			if (Contenido == "?")
-			{
-				if (Contenido == "este")
-				{
-					match("este");
-				}
-				else
-				{
-					match("oeste");
-				}
-				match("condicionado");
-			}
 			if (Contenido == "#")
 			{
-				match("esto");
-				if (Contenido == "&")
-				{
-					Hola();
-				}
-				match("es");
-				match("recursivo");
-				Si();
+				Librerias();
 			}
 		}
 		public void Main()
@@ -61,25 +42,6 @@ namespace Cplusplus
 			BloqueInstrucciones();
 		}
 		public void BloqueInstrucciones()
-		{
-			if (Contenido == "listaInstrucciones")
-			{
-				match("listaInstrucciones");
-			}
-			else
-			{
-				Instruccion();
-			}
-		}
-		public void ListaInstrucciones()
-		{
-			Instruccion();
-			if (Contenido == ".")
-			{
-				Instruccion();
-			}
-		}
-		public void Instruccion()
 		{
 		}
 	}
