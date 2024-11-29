@@ -162,6 +162,7 @@ namespace Compilador
                 // empieza la siguiente hasta el derecho, la parte inicial se separa del cuerpo
                 // que dentro puede tener otro cuerpo
             }
+            else if(Clasificacion == Tipos.Epsilon || Clasificacion == Tipos.Or) throw new Error("TIPO NO PERMITIDO", log, linea);
             if (Clasificacion != Tipos.FinProduccion)
             {
                 ConjuntoTokens(ref listaTokens,ref control);
@@ -203,6 +204,7 @@ namespace Compilador
                     control++;
                     conjuntoDelParentesis(ref listaTokens, ref control);
                 }
+                else if(Clasificacion == Tipos.Epsilon || Clasificacion == Tipos.FinProduccion) throw new Error("TIPO NO PERMITIDO", log, linea);
             }
             log.WriteLine("------ Fin Almacenaje de tokens en parentesis ------");
             match(Tipos.PDerecho);
